@@ -1,0 +1,1 @@
+g++ src/sources/*.cc src/headers/*.h -o DarksoulIV
