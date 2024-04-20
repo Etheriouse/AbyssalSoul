@@ -15,13 +15,17 @@ item::item(std::string name)
     this->id=0;
 }
 
-item::item(std::string name, void (*function_to_apply)())
+item::item(std::string name, void (*function_to_apply)(entity *target, entity *source))
 {
     this->name = name;
     this->id = 0;
-    this->apply = apply;
+    this->toExecute = function_to_apply;
 }
 
-void *item::getApply() {
-    return this->apply;
+//void (*item::getApply())() {
+//    return this->apply;
+//}
+
+void item::apply(entity *target, entity *source) {
+    this->toExecute(target, source);
 }
