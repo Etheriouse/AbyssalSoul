@@ -5,14 +5,21 @@
 
 item::item()
 {
-    this->name="none";
-    this->id=-1;
+    this->name = "none";
+    this->id = -1;
 }
 
 item::item(std::string name)
 {
-    this->name=name;
-    this->id=0;
+    this->name = name;
+    this->id = 0;
+}
+
+item::item(std::string name, std::string description)
+{
+    this->name = name;
+    this->id = 0;
+    this->description = description;
 }
 
 item::item(std::string name, void (*function_to_apply)(entity *target, entity *source))
@@ -22,10 +29,19 @@ item::item(std::string name, void (*function_to_apply)(entity *target, entity *s
     this->toExecute = function_to_apply;
 }
 
-//void (*item::getApply())() {
-//    return this->apply;
-//}
+item::item(std::string name, std::string description, void (*function_to_apply)(entity *target, entity *source))
+{
+    this->name = name;
+    this->id = 0;
+    this->toExecute = function_to_apply;
+    this->description = description;
+}
 
-void item::apply(entity *target, entity *source) {
+// void (*item::getApply())() {
+//     return this->apply;
+// }
+
+void item::apply(entity *target, entity *source)
+{
     this->toExecute(target, source);
 }
