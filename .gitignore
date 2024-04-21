@@ -18,3 +18,5 @@
 # Vscode
 .vscode
 
+# confidential
+.key
