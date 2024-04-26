@@ -7,10 +7,20 @@
 #include "../headers/ring.h"
 #include "../headers/item.h"
 
+player::player() {
+    this->healt = (int)(log(1) / log(30)) * 1000;
+    this->max_healt = (int)(log(1) / log(30)) * 1000;
+    this->vitality = 1;
+    this->endurance = 1;
+    this->dexterity = 1;
+    this->strength = 1;
+    this->faith = 1;
+}
+
 player::player(int vitality)
 {
-    this->healt = (int)(log(this->vitality) / log(30)) * 1000;
-    this->max_healt = (int)(log(this->vitality) / log(30)) * 1000;
+    this->healt = (int)(log(vitality) / log(30)) * 1000;
+    this->max_healt = (int)(log(vitality) / log(30)) * 1000;
     this->vitality = vitality;
     this->endurance = 1;
     this->dexterity = 1;
@@ -20,8 +30,8 @@ player::player(int vitality)
 
 player::player(int vitality, int endurance, int strength, int dexterity, int faith)
 {
-    this->healt = (int)(log(this->vitality) / log(30)) * 1000;
-    this->max_healt = (int)(log(this->vitality) / log(30)) * 1000;
+    this->healt = (int)(log(vitality) / log(30)) * 1000;
+    this->max_healt = (int)(log(vitality) / log(30)) * 1000;
     this->vitality = vitality;
     this->endurance = endurance;
     this->dexterity = dexterity;
@@ -35,7 +45,7 @@ player::player(int vitality, int endurance, int strength, int dexterity, int fai
  */
 int *player::getStat()
 {
-    return new int[5]{5, 6, 6, 6, 6};
+    return new int[5]{this->vitality, this->endurance, this->dexterity, this->strength, this->faith};
 }
 
 weapon player::getWeapons_selected()

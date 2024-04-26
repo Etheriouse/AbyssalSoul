@@ -8,11 +8,12 @@
 #include "item.h"
 #include "weapon.h"
 #include "object.h"
-#include  "ring.h"
+#include "ring.h"
 
 class player : public entity {
 
 public:
+    player();
     player(int vitality);
     player(int vitality, int endurance, int strength, int dexterity, int faith);
     int* getStat();
