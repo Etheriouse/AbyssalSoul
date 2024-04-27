@@ -16,3 +16,4 @@ int getX(int xy) {
 int getY(int xy) {
     return xy%100;
 }
+
