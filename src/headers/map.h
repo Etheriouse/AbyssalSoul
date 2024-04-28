@@ -1,12 +1,14 @@
+#ifndef Map_h
+#define Map_h
+
 #include <vector>
 #include <map>
 
 #include "mob.h"
 #include "player.h"
 #include "image.h"
+#include "var.h"
 
-#ifndef Map_h
-#define Map_h
 
 class map {
 
@@ -14,8 +16,8 @@ class map {
         map();
         map(int level_global);
         map(int level_global, player *p);
-        map(int level_global, player *p, int surface[64][64]);
-        map(int level_global, player *p, int surface[64][64], std::map<int, mob> mobs);
+        map(int level_global, player *p, int surface[var::HEIGHT][var::WIDTH]);
+        map(int level_global, player *p, int surface[var::HEIGHT][var::WIDTH], std::map<int, mob> mobs);
         map(int level_global, player *p, image surface);
         map(int level_global, player *p, image surface, std::map<int, mob> mobs);
 
@@ -23,19 +25,24 @@ class map {
         std::map<int, mob> getMobs();
         int getLevelGlobal();
         int getSurface(int xy);
+        int getPosPlayerX();
+        int getPosPlayerY();
 
         void setPlayer(player *p);
         void setMobs(std::map<int, mob> mobs);
         void setLevelGlobal(int level_global);
         void setSurface(int xy, int value);
+        void setPosPlayer(int x, int y);
 
         void show(bool number);
 
     private:
-        int surface[64][64];
+        int surface[var::HEIGHT][var::WIDTH];
         int level_global;
         std::map<int, mob> mobs;
         player *p;
+        int player_x;
+        int player_y;
 
 };
 
