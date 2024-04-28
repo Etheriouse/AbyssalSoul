@@ -22,11 +22,8 @@ class interface {
     private:
         void clearTexture();
         bool checkColision(int block);
-        int arronditofiveteen(int i);
-        void movetoright(int i);
-        void movetoleft(int i);
-        void movetotop(int i);
-        void movetobot(int i);
+        void moveX(int i);
+        void moveY(int i);
 
         SDL_Window* window;
         SDL_Renderer* renderer;

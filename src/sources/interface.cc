@@ -1,7 +1,10 @@
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 #include "../headers/interface.h"
 #include "../headers/function.h"
+#include "../headers/vector.h"
 
 interface::interface()
 {
@@ -141,17 +144,17 @@ void interface::run()
     bool hautAppuye = false;
     bool basAppuye = false;
 
-    Uint32 startTime = 0;
-    Uint32 endTime = 0;
-    Uint32 frameCount = 0;
-    float avgFPS = 0;
+    double acceleration = 1.1;
+    vector direction = vector(0, 0);
+    vector vitesse = vector(0, 0);
+    double vitesse_max = 7;
+
+    auto start = std::chrono::high_resolution_clock::now();
+    long frames = 0;
+    double fps = 0;
     bool windows_on = true;
     while (windows_on)
     {
-        startTime = SDL_GetTicks();
-
-        system("clear");
-        std::cout << checkColision(169) << std::endl;
         SDL_Event event;
         if (checkColision(90))
         {
@@ -159,7 +162,6 @@ void interface::run()
         }
         while (SDL_PollEvent(&event))
         {
-            // std::cout << "x: " << m->getPosPlayerX() << " y: " << m->getPosPlayerY() << std::endl;
             if (event.type == SDL_QUIT)
             {
                 windows_on = false;
@@ -207,65 +209,101 @@ void interface::run()
             }
         }
 
+        direction.x = 0;
+        direction.y = 0;
+
         if (droiteAppuye)
         {
-            movetoright(10);
-            if (checkColision(169))
-            {
-                movetoleft(10);
-            }
-            if (checkColision(174))
-            {
-                movetoleft(5);
-            }
+            direction.x = 1;
         }
 
         if (gaucheAppuye)
         {
-            movetoleft(10);
-            if (checkColision(169))
-            {
-                movetoright(10);
-            }
-            if (checkColision(174))
-            {
-                movetoright(5);
-            }
+            direction.x = -1;
         }
 
         if (hautAppuye)
         {
-            movetotop(10);
-            if (checkColision(169))
-            {
-                movetobot(10);
-            }
-            if (checkColision(174))
-            {
-                movetobot(5);
-            }
+            direction.y = -1;
         }
 
         if (basAppuye)
         {
-            movetobot(10);
-            if (checkColision(169))
+            direction.y = 1;
+        }
+
+        vitesse.x += direction.x * acceleration;
+        vitesse.y += direction.y * acceleration;
+
+        if (direction.x == 0 || direction.y == 0)
+        {
+            if (direction.x == 0)
             {
-                movetotop(10);
+                if (vitesse.x > 1)
+                {
+                    vitesse.x = 0;
+                }
+                else if (vitesse.x < -1)
+                {
+                    vitesse.x = 0;
+                }
             }
-            if (checkColision(174))
+
+            if (direction.y == 0)
             {
-                movetotop(5);
+                if (vitesse.y > 1)
+                {
+                    vitesse.y = 0;
+                }
+                else if (vitesse.y < -1)
+                {
+                    vitesse.y = 0;
+                }
             }
+        }
+
+        if (vitesse.x > vitesse_max)
+        {
+            vitesse.x = vitesse_max;
+        }
+        else if (vitesse.x < (-vitesse_max))
+        {
+            vitesse.x = (-vitesse_max);
+        }
+
+        if (vitesse.y > vitesse_max)
+        {
+            vitesse.y = vitesse_max;
+        }
+        else if (vitesse.y < (-vitesse_max))
+        {
+            vitesse.y = (-vitesse_max);
+        }
+
+        moveX(vitesse.x);
+        if (checkColision(174))
+        {
+            moveX(-vitesse.x / 2);
+        }
+        if (checkColision(169))
+        {
+            moveX(-vitesse.x);
+        }
+
+        moveY(vitesse.y);
+        if (checkColision(174))
+        {
+            moveY(-vitesse.y / 2);
+        }
+        if (checkColision(169))
+        {
+            moveY(-vitesse.y);
         }
 
         SDL_Rect grass1 = {100, 100, 100, 100};
         SDL_Rect darksoul1 = {200, 100, 100, 100};
-        // SDL_SetRenderTarget(renderer, target);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
-        // SDL_RenderCopy(renderer, grass, NULL, &grass1); // Dessiner la texture 1
-        // SDL_RenderCopy(renderer, darksoul, NULL, &darksoul1); // Dessiner la texture 2
 
         for (int y = 0; y < var::HEIGHT; y += 1)
         {
@@ -300,37 +338,25 @@ void interface::run()
             }
         }
 
-        // SDL_SetRenderTarget(renderer, NULL);
-
         SDL_Rect playerRect = {m->getPosPlayerX(), m->getPosPlayerY(), 50, 50};
         SDL_RenderCopy(renderer, this->textures["player"], NULL, &playerRect);
         SDL_RenderPresent(renderer);
 
-        // Mesurer le temps à la fin de la boucle
-        endTime = SDL_GetTicks();
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        frames++;
 
-        // Calculer le temps écoulé pour cette trame
-        Uint32 frameTime = endTime - startTime;
-
-        // Calculer les FPS
-        float currentFPS = 1000.0 / frameTime;
-        avgFPS = (avgFPS * frameCount + currentFPS) / (frameCount + 1);
-
-        // Incrémenter le compteur de trames
-        frameCount++;
-
-        // Afficher les FPS toutes les secondes
-        if (endTime - startTime < 1000)
+        if (duration >= 1000)
         {
-            // system("clear");
-            // printf("fps: %.2f, total frame: %d\n", avgFPS, frameCount);
+            fps = frames/ (duration/1000.0);
+            system("clear");
+            printf("fps: %.2f, total frame: %d\n", fps, frames);
+
+            start = std::chrono::high_resolution_clock::now();
+            frames = 0;
         }
 
-        // Limiter le FPS pour économiser les ressources CPU
-        if (frameTime < 1000 / 60)
-        {
-            SDL_Delay((1000 / 60) - frameTime);
-        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(16)); // 60 FPS (1000ms / 60 ≈ 16.67)
     }
 
     clearTexture();
@@ -339,23 +365,14 @@ void interface::run()
     SDL_Quit();
 }
 
+// bool interface::checkColision(int block, int[4] colision); //TODO
+
 bool interface::checkColision(int block)
 {
     int x = m->getPosPlayerX();
     int y = m->getPosPlayerY();
 
-    printf("arrondi: x:%d y:%d\n", x / 50, y / 50);
-    printf("arrondi: x:%d y:%d\n", arronditofiveteen(x) / 50, arronditofiveteen(y) / 50);
-
-    // if (m->getSurface(((x / 50) * 100) + (y / 50)) == block || m->getSurface((((x + 49) / 50) * 100) + ((y + 49) / 50)) == block || m->getSurface((((x + 49) / 50) * 100) + (y / 50)) == block || m->getSurface(((x / 50) * 100) + ((y + 49) / 50)) == block)
-    // {
-    //     return true;
-    // }
-    // else
-    // {
-    //     return false;
-    // }
-    if (m->getSurface((((x + 49) / 50) * 100) + ((y + 49) / 50)) == block || m->getSurface(((x  / 50) * 100) + ((y+49) / 50)) == block)
+    if (m->getSurface((((x + 39) / 50) * 100) + ((y + 49) / 50)) == block || m->getSurface((((x + 19) / 50) * 100) + ((y + 49) / 50)) == block)
     {
         return true;
     }
@@ -365,32 +382,12 @@ bool interface::checkColision(int block)
     }
 }
 
-int interface::arronditofiveteen(int i)
-{
-    i++;
-    while (!(i % 50 == 0))
-    {
-        i -= 1;
-    }
-    return i;
-}
-
-void interface::movetoright(int i)
+void interface::moveX(int i)
 {
     m->setPosPlayer(m->getPosPlayerX() + i, m->getPosPlayerY());
 }
 
-void interface::movetoleft(int i)
-{
-    m->setPosPlayer(m->getPosPlayerX() - i, m->getPosPlayerY());
-}
-
-void interface::movetotop(int i)
-{
-    m->setPosPlayer(m->getPosPlayerX(), m->getPosPlayerY() - i);
-}
-
-void interface::movetobot(int i)
+void interface::moveY(int i)
 {
     m->setPosPlayer(m->getPosPlayerX(), m->getPosPlayerY() + i);
 }
