@@ -24,14 +24,16 @@ class map {
         player* getPlayer();
         std::map<int, mob> getMobs();
         int getLevelGlobal();
-        int getSurface(int xy);
+        int getSurface(int x, int y);
         int getPosPlayerX();
         int getPosPlayerY();
+        int getHeight();
+        int getWidth();
 
         void setPlayer(player *p);
         void setMobs(std::map<int, mob> mobs);
         void setLevelGlobal(int level_global);
-        void setSurface(int xy, int value);
+        void setSurface(int x, int y, int value);
         void setPosPlayer(int x, int y);
 
         void show(bool number);

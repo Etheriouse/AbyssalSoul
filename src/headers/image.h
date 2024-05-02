@@ -1,12 +1,14 @@
 #ifndef Image_h
 #define Image_h
 
+#include "vector.h"
+
 class image {
 
     public:
         image();
         image(const char* filename);
-        int* getPixel(int xy);
+        int* getPixel(vector xy);
 
     private:
         int width, height, channels;

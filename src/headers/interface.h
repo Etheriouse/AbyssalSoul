@@ -7,6 +7,7 @@
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
+
 #include "map.h"
 
 class interface {
@@ -20,13 +21,16 @@ class interface {
         void run();
 
     private:
-        void clearTexture();
+        void clearTextures();
+        void loadTextures();
         bool checkColision(int block);
         void moveX(int i);
         void moveY(int i);
+        void escapeMenu();
 
         SDL_Window* window;
         SDL_Renderer* renderer;
+        bool windows_on = true;
         std::map<const char*, SDL_Texture*> textures;
         map* m;
 

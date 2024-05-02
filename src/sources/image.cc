@@ -19,10 +19,10 @@ image::image(const char *filename)
  * @param coordonnée les coordonée du pixel rechercher
  * @return les couleur rgb {r, g ,b}
 */
-int *image::getPixel(int xy)
+int *image::getPixel(vector xy)
 {
-    int x = getX(xy);
-    int y = getY(xy);
+    int x = xy.x;
+    int y = xy.y;
 
     int index = (y * this->width + x) * this->channels;
     unsigned char r = this->data[index];

@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "../headers/map.h"
+#include "../headers/vector.h"
 #include "../headers/function.h"
 
 map::map()
@@ -91,8 +92,10 @@ map::map(int level_global, player *p, image surface)
     {
         for (int j = 0; j < var::WIDTH; ++j)
         {
-            int average = (surface.getPixel(j * 100 + i)[0] + surface.getPixel(j * 100 + i)[1] + surface.getPixel(j * 100 + i)[2]) / 3;
+            int *rgb = surface.getPixel(vector(j, i));
+            int average = (rgb[0] + rgb[1] + rgb[2])/3;
             this->surface[i][j] = average;
+            delete(rgb);
         }
     }
     this->mobs = std::map<int, mob>();
@@ -108,8 +111,10 @@ map::map(int level_global, player *p, image surface, std::map<int, mob> mobs)
     {
         for (int j = 0; j < var::WIDTH; ++j)
         {
-            int average = (surface.getPixel(j * 100 + i)[0] + surface.getPixel(j * 100 + i)[1] + surface.getPixel(j * 100 + i)[2]) / 3;
+            int *rgb = surface.getPixel(vector(j, i));
+            int average = (rgb[0] + rgb[1] + rgb[2])/3;
             this->surface[i][j] = average;
+            delete(rgb);
         }
     }
     this->mobs = mobs;
@@ -132,9 +137,9 @@ int map::getLevelGlobal()
     return this->level_global;
 }
 
-int map::getSurface(int xy)
+int map::getSurface(int x, int y)
 {
-    return this->surface[getY(xy)][getX(xy)];
+    return this->surface[y][x];
 }
 
 int map::getPosPlayerX()
@@ -145,6 +150,16 @@ int map::getPosPlayerX()
 int map::getPosPlayerY()
 {
     return this->player_y;
+}
+
+int map::getHeight()
+{
+    return var::HEIGHT;
+}
+
+int map::getWidth()
+{
+    return var::WIDTH;
 }
 
 void map::setPlayer(player *p)
@@ -162,9 +177,9 @@ void map::setLevelGlobal(int level_global)
     this->level_global = level_global;
 }
 
-void map::setSurface(int xy, int value)
+void map::setSurface(int x, int y, int value)
 {
-    this->surface[getY(xy)][getX(xy)] = value;
+    this->surface[y][x] = value;
 }
 
 void map::setPosPlayer(int x, int y)
