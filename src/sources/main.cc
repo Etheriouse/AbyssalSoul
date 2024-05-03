@@ -26,7 +26,9 @@ int main(int argc, char const *argv[])
     // cout << 12*100+34 << endl;
 
     // cout << "1478: " << getY(1478) << endl;
-    map *m = new map(1, new player(10), image("ressources/assets/newmap.png"));
+    map *m = new map(1, new player(10), image("ressources/assets/bordermap.png"));
+    //camera *view = new camera(m);
+    //view->update();
     //m->show(true);
     // for(int i = 0; i<var::HEIGHT; i+=1) { 169 blue 174 pink 90 red 255 white
     //     for(int y = 0; y<var::WIDTH; y++) {

@@ -8,6 +8,7 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 
+#include "rectangle.h"
 #include "map.h"
 
 class interface {
@@ -24,6 +25,7 @@ class interface {
         void clearTextures();
         void loadTextures();
         bool checkColision(int block);
+        bool checkColision(int block, rectangle r);
         void moveX(int i);
         void moveY(int i);
         void escapeMenu();

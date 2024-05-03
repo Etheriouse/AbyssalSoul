@@ -4,8 +4,8 @@
 class var {
 
     public:
-        static constexpr int HEIGHT = 64;
-        static constexpr int WIDTH = 64;
+        static constexpr int HEIGHT = 128;
+        static constexpr int WIDTH = 128;
         static constexpr int C_HEIGHT = 18;
         static constexpr int C_WIDTH = 32;
 

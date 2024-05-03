@@ -6,7 +6,6 @@
 #include "../headers/interface.h"
 #include "../headers/function.h"
 #include "../headers/vector.h"
-#include "../headers/camera.h"
 
 interface::interface()
 {
@@ -141,6 +140,7 @@ void interface::loadTextures()
     this->textures["image"] = IMG_LoadTexture(renderer, "ressources/assets/image.png");
     this->textures["player"] = IMG_LoadTexture(renderer, "ressources/assets/player.png");
     this->textures["menu"] = IMG_LoadTexture(renderer, "ressources/assets/menu.png");
+    this->textures["grass"] = IMG_LoadTexture(renderer, "ressources/assets/grass.png");
     this->textures["background"] = IMG_LoadTexture(renderer, "ressources/assets/background.jpg");
     this->textures["error"] = IMG_LoadTexture(renderer, "ressources/assets/Icone.png");
 }
@@ -164,22 +164,23 @@ void interface::run()
     auto start = std::chrono::high_resolution_clock::now();
     long frames = 0;
     double fps = 0;
-
-    camera *view = new camera(this->m);
+    this->m->setPosPlayer(3250, 3400);
+    SDL_Rect rect;
+    SDL_Event event;
+    rectangle hitboxPlayer = rectangle(10, 40, 40, 49);
 
     while (windows_on)
     {
-        SDL_Event event;
-        if (checkColision(90))
+        if (checkColision(90, hitboxPlayer))
         {
-            windows_on = !windows_on;
+             windows_on = false;
         }
         while (SDL_PollEvent(&event))
         {
-            if (event.key.keysym.sym == SDLK_ESCAPE && !escapeMenuOn)
-            {
-                escapeMenuOn = true;
-            }
+            // if (event.key.keysym.sym == SDLK_ESCAPE && !escapeMenuOn)
+            //     {
+            //         escapeMenuOn = true;
+            //     }
 
             if (event.type == SDL_QUIT)
             {
@@ -304,7 +305,11 @@ void interface::run()
         {
             moveX(-vitesse.x / 2);
         }
-        if (checkColision(169))
+        if (checkColision(169, hitboxPlayer))
+        {
+            moveX(-vitesse.x);
+        }
+        if (checkColision(10))
         {
             moveX(-vitesse.x);
         }
@@ -314,36 +319,52 @@ void interface::run()
         {
             moveY(-vitesse.y / 2);
         }
-        if (checkColision(169))
+        if (checkColision(169, hitboxPlayer))
+        {
+            moveY(-vitesse.y);
+        }
+        if (checkColision(10))
         {
             moveY(-vitesse.y);
         }
 
-        std::cout << "player posSS: " << m->getPosPlayerX()/50 << " " << m->getPosPlayerY()/50 << std::endl;
-        view->update();
+        // std::cout << "player posSS: " << m->getPosPlayerX() << " " << m->getPosPlayerY() << std::endl;
+        //  view->update();
 
-        SDL_Rect grass1 = {100, 100, 100, 100};
-        SDL_Rect darksoul1 = {200, 100, 100, 100};
-        // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
-        for (int y = 0; y < var::C_HEIGHT; y += 1)
+
+        int xmoin = m->getPosPlayerX() - 800;
+        int parseXmoin = xmoin / 50;
+        int startCal = (parseXmoin * 50) - xmoin;
+
+        int ymoin = m->getPosPlayerY() - 450;
+        int parseYmoin = ymoin / 50;
+        int startCalY = (parseYmoin * 50) - ymoin;
+
+        for (int y = startCalY - 50, u = -1; y < startCalY + 950; u += 1, y += 50)
         {
-            for (int i = 0; i < var::C_WIDTH; i += 1)
+            for (int i = startCal - 50, c = -1; i < startCal + 1650; c += 1, i += 50)
             {
 
-                // 255 -> floor1
-                // 90 -> image.png
-                // 169 -> floor3
-                // 174 -> water
-                // 124 -> lava
-
-                SDL_Rect rect = {0 + i * 50, 0 + y * 50, 50, 50};
-                switch (view->getSurface(i, y))
+                // std::cout << i << " " << c << std::endl;
+                // printf("x: %d, y: %d\n", parseXmoin+c, parseYmoin+u);
+                rect = {i, y, 50, 50};
+                if (parseXmoin + c < 0)
+                {
+                    printf("here\n");
+                }
+                if (parseYmoin + u < 0)
+                {
+                    printf("here\n");
+                }
+                std::cout << "x: " << i / 50 << " y: " << y / 50 << std::endl;
+                switch (this->m->getSurface(parseXmoin + c, parseYmoin + u))
                 {
                 case 255:
                     SDL_RenderCopy(renderer, this->textures["floor1"], NULL, &rect);
                     break;
-                case 90:
+                case 91:
                     SDL_RenderCopy(renderer, this->textures["image"], NULL, &rect);
                     break;
                 case 169:
@@ -355,15 +376,22 @@ void interface::run()
                 case 124:
                     SDL_RenderCopy(renderer, this->textures["lava"], NULL, &rect);
                     break;
+                case 154:
+                    SDL_RenderCopy(renderer, this->textures["grass"], NULL, &rect);
+                    break;
+                case 10:
+                    SDL_RenderCopy(renderer, this->textures["water"], NULL, &rect);
+                    break;
 
                 default:
                     SDL_RenderCopy(renderer, this->textures["error"], NULL, &rect);
                     break;
                 }
+                // 255->floor1 90->image.png 169->floor3 174->water 124->lava 154->grass 10->world border
             }
         }
 
-        SDL_Rect playerRect = {m->getPosPlayerX(), m->getPosPlayerY(), 50, 50};
+        SDL_Rect playerRect = {800, 450, 50, 50};
         SDL_RenderCopy(renderer, this->textures["player"], NULL, &playerRect);
 
         SDL_RenderPresent(renderer);
@@ -381,17 +409,20 @@ void interface::run()
         if (duration >= 1000)
         {
             fps = frames / (duration / 1000.0);
-            //system("clear");
+            // system("clear");
             printf("fps: %.2f, total frame: %d\n", fps, frames);
 
             start = std::chrono::high_resolution_clock::now();
             frames = 0;
         }
+        printf("fps: %.2f, total frame: %d\n", fps, frames);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(7)); // 60 fps (1/60 * 1000 ≈ 16.67) 144 fps ( 1/144 * 1000 ≈ 6.944)
+        // std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // 60 fps (1/60 * 1000 ≈ 16.67) 144 fps ( 1/144 * 1000 ≈ 6.944)
+        //  system("clear");
+        //  windows_on = false;
+        // std::cout << "player posSS: " << m->getPosPlayerX() << " " << m->getPosPlayerY() << std::endl;
     }
-    system("clear");
-
 
     clearTextures();
     SDL_DestroyRenderer(this->renderer);
@@ -401,12 +432,42 @@ void interface::run()
 
 // bool interface::checkColision(int block, int[4] colision); //TODO
 
+/**
+ * @param block l'id du block a detecter
+ * @param v1 les 2 point de gauche x haut y bas de la collision
+ * @param v1 les 2 point de droite x haut y bas de la collision
+ * @return si la collision est detecter dans la zone definie
+*/
+bool interface::checkColision(int block, rectangle r) {
+    int x = m->getPosPlayerX();
+    int y = m->getPosPlayerY();
+
+    /*
+     * a b
+     * c d
+    */
+
+    bool a = m->getSurface((x+r.a) / 50, (y+r.b) / 50) == block;
+    bool b = m->getSurface((x+r.c) / 50, (y+r.b) / 50) == block;
+    bool c = m->getSurface((x+r.a) / 50, (y+r.d) / 50) == block;
+    bool d = m->getSurface((x+r.c) / 50, (y+r.d) / 50) == block;
+
+    if (a || b || c || d)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 bool interface::checkColision(int block)
 {
     int x = m->getPosPlayerX();
     int y = m->getPosPlayerY();
 
-    if (m->getSurface((x + 39) / 50, (y + 49) / 50) == block || m->getSurface((x + 19) / 50, (y + 49) / 50) == block)
+    if (m->getSurface((x + 50) / 50, (y + 50) / 50) == block || m->getSurface((x + 0) / 50, (y + 50) / 50) == block)
     {
         return true;
     }
@@ -491,3 +552,5 @@ void interface::escapeMenu()
         std::this_thread::sleep_for(std::chrono::milliseconds(7)); // 60 FPS (1000ms / 60 ≈ 16.67)
     }
 }
+
+void clearTextures() {}
