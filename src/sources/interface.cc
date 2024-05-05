@@ -138,7 +138,7 @@ void interface::loadTextures()
     this->textures["floor1"] = IMG_LoadTexture(renderer, "ressources/assets/floor1.png");
     this->textures["floor3"] = IMG_LoadTexture(renderer, "ressources/assets/floor3.png");
     this->textures["image"] = IMG_LoadTexture(renderer, "ressources/assets/image.png");
-    this->textures["player"] = IMG_LoadTexture(renderer, "ressources/assets/player.png");
+    this->textures["player"] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_idle.png");
     this->textures["menu"] = IMG_LoadTexture(renderer, "ressources/assets/menu.png");
     this->textures["grass"] = IMG_LoadTexture(renderer, "ressources/assets/grass.png");
     this->textures["background"] = IMG_LoadTexture(renderer, "ressources/assets/background.jpg");
@@ -153,11 +153,14 @@ void interface::run()
     bool droiteAppuye = false;
     bool hautAppuye = false;
     bool basAppuye = false;
+    bool sprint = false;
 
     double acceleration = 1.1;
     vector direction = vector(0, 0);
     vector vitesse = vector(0, 0);
-    double vitesse_max = 7;
+    const double vitesse_max_nosprint = 5;
+    const double vitesse_max_sprint = 7;
+    double vitesse_max = vitesse_max_nosprint;
 
     bool escapeMenuOn = false;
 
@@ -169,11 +172,19 @@ void interface::run()
     SDL_Event event;
     rectangle hitboxPlayer = rectangle(10, 40, 40, 49);
 
+    SDL_Texture* walk[4] = {};
+    walk[0] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_walking_1.png");
+    walk[1] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_walking_2.png");
+    walk[2] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_walking_3.png");
+    walk[3] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_walking_4.png");
+
+    int tick = 0;
+    int frameSprite = 0;
     while (windows_on)
     {
         if (checkColision(90, hitboxPlayer))
         {
-             windows_on = false;
+            windows_on = false;
         }
         while (SDL_PollEvent(&event))
         {
@@ -181,6 +192,7 @@ void interface::run()
             //     {
             //         escapeMenuOn = true;
             //     }
+            std::cout << event.key.keysym.sym << std::endl;
 
             if (event.type == SDL_QUIT)
             {
@@ -201,6 +213,9 @@ void interface::run()
                     break;
                 case SDLK_s:
                     basAppuye = true;
+                    break;
+                case SDLK_LCTRL:
+                    sprint = true;
                     break;
                 default:
                     break;
@@ -223,10 +238,19 @@ void interface::run()
                 case SDLK_s:
                     basAppuye = false;
                     break;
+                case SDLK_LCTRL:
+                    sprint = false;
+                    break;
                 default:
                     break;
                 }
             }
+        }
+
+        if(sprint) {
+            vitesse_max = vitesse_max_sprint;
+        } else {
+            vitesse_max = vitesse_max_nosprint;
         }
 
         direction.x = 0;
@@ -358,7 +382,7 @@ void interface::run()
                 {
                     printf("here\n");
                 }
-                std::cout << "x: " << i / 50 << " y: " << y / 50 << std::endl;
+                //std::cout << "x: " << i / 50 << " y: " << y / 50 << std::endl;
                 switch (this->m->getSurface(parseXmoin + c, parseYmoin + u))
                 {
                 case 255:
@@ -392,8 +416,16 @@ void interface::run()
         }
 
         SDL_Rect playerRect = {800, 450, 50, 50};
-        SDL_RenderCopy(renderer, this->textures["player"], NULL, &playerRect);
+        if(tick%15 == 0) {
+            frameSprite+=1;
+            frameSprite = frameSprite%4;
+        }
 
+        if(vitesse.x == 0 && vitesse.y == 0) {
+            SDL_RenderCopy(renderer, this->textures["player"], NULL, &playerRect);
+        } else {
+            SDL_RenderCopy(renderer, walk[frameSprite], NULL, &playerRect);
+        }
         SDL_RenderPresent(renderer);
 
         if (escapeMenuOn)
@@ -409,7 +441,7 @@ void interface::run()
         if (duration >= 1000)
         {
             fps = frames / (duration / 1000.0);
-            // system("clear");
+            system("clear");
             printf("fps: %.2f, total frame: %d\n", fps, frames);
 
             start = std::chrono::high_resolution_clock::now();
@@ -419,10 +451,17 @@ void interface::run()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(7)); // 60 fps (1/60 * 1000 ≈ 16.67) 144 fps ( 1/144 * 1000 ≈ 6.944)
         // std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // 60 fps (1/60 * 1000 ≈ 16.67) 144 fps ( 1/144 * 1000 ≈ 6.944)
-        //  system("clear");
+        //system("clear");
         //  windows_on = false;
         // std::cout << "player posSS: " << m->getPosPlayerX() << " " << m->getPosPlayerY() << std::endl;
+        tick++;
     }
+
+    for (auto &i : walk)
+    {
+        SDL_DestroyTexture(i);
+    }
+
 
     clearTextures();
     SDL_DestroyRenderer(this->renderer);
@@ -437,20 +476,21 @@ void interface::run()
  * @param v1 les 2 point de gauche x haut y bas de la collision
  * @param v1 les 2 point de droite x haut y bas de la collision
  * @return si la collision est detecter dans la zone definie
-*/
-bool interface::checkColision(int block, rectangle r) {
+ */
+bool interface::checkColision(int block, rectangle r)
+{
     int x = m->getPosPlayerX();
     int y = m->getPosPlayerY();
 
     /*
      * a b
      * c d
-    */
+     */
 
-    bool a = m->getSurface((x+r.a) / 50, (y+r.b) / 50) == block;
-    bool b = m->getSurface((x+r.c) / 50, (y+r.b) / 50) == block;
-    bool c = m->getSurface((x+r.a) / 50, (y+r.d) / 50) == block;
-    bool d = m->getSurface((x+r.c) / 50, (y+r.d) / 50) == block;
+    bool a = m->getSurface((x + r.a) / 50, (y + r.b) / 50) == block;
+    bool b = m->getSurface((x + r.c) / 50, (y + r.b) / 50) == block;
+    bool c = m->getSurface((x + r.a) / 50, (y + r.d) / 50) == block;
+    bool d = m->getSurface((x + r.c) / 50, (y + r.d) / 50) == block;
 
     if (a || b || c || d)
     {
