@@ -29,6 +29,7 @@ class interface {
         void moveX(int i);
         void moveY(int i);
         void escapeMenu();
+        bool isFloor(int block, rectangle r);
 
         SDL_Window* window;
         SDL_Renderer* renderer;

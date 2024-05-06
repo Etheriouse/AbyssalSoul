@@ -133,16 +133,20 @@ void interface::clearTextures()
 
 void interface::loadTextures()
 {
-    this->textures["water"] = IMG_LoadTexture(renderer, "ressources/assets/water.png");
-    this->textures["lava"] = IMG_LoadTexture(renderer, "ressources/assets/lava.jpg");
-    this->textures["floor1"] = IMG_LoadTexture(renderer, "ressources/assets/floor1.png");
-    this->textures["floor3"] = IMG_LoadTexture(renderer, "ressources/assets/floor3.png");
-    this->textures["image"] = IMG_LoadTexture(renderer, "ressources/assets/image.png");
+    // this->textures["water"] = IMG_LoadTexture(renderer, "ressources/assets/water.png");
+    this->textures["lava"] = IMG_LoadTexture(renderer, "ressources/assets/2d/lava.png");
+    // this->textures["floor1"] = IMG_LoadTexture(renderer, "ressources/assets/floor1.png");
+    // this->textures["floor3"] = IMG_LoadTexture(renderer, "ressources/assets/floor3.png");
+    // this->textures["image"] = IMG_LoadTexture(renderer, "ressources/assets/image.png");
     this->textures["player"] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_idle.png");
     this->textures["menu"] = IMG_LoadTexture(renderer, "ressources/assets/menu.png");
-    this->textures["grass"] = IMG_LoadTexture(renderer, "ressources/assets/grass.png");
+    // this->textures["grass"] = IMG_LoadTexture(renderer, "ressources/assets/grass.png");
     this->textures["background"] = IMG_LoadTexture(renderer, "ressources/assets/background.jpg");
-    this->textures["error"] = IMG_LoadTexture(renderer, "ressources/assets/Icone.png");
+    this->textures["error"] = IMG_LoadTexture(renderer, "ressources/assets/2d/error.png");
+    this->textures["dark_brick"] = IMG_LoadTexture(renderer, "ressources/assets/2d/dark_brick.png");
+    this->textures["light_brick"] = IMG_LoadTexture(renderer, "ressources/assets/2d/light_brick.png");
+    this->textures["open_door"] = IMG_LoadTexture(renderer, "ressources/assets/2d/open_door.png");
+    this->textures["abyss"] = IMG_LoadTexture(renderer, "ressources/assets/2d/abyss_world.png");
 }
 
 void interface::run()
@@ -154,10 +158,18 @@ void interface::run()
     bool hautAppuye = false;
     bool basAppuye = false;
     bool sprint = false;
+    bool jump = false;
+    bool jump_started = false;
+    bool it = false;
 
-    double acceleration = 1.1;
+    int time_jump = 0;
+    const int time_max_jump = 25;
+    double acceleration = 2;
     vector direction = vector(0, 0);
     vector vitesse = vector(0, 0);
+    vector gravity = vector(0, 1);
+    const double vitesse_fall_max = 12;
+    const double vitesse_jump_max = 6;
     const double vitesse_max_nosprint = 5;
     const double vitesse_max_sprint = 7;
     double vitesse_max = vitesse_max_nosprint;
@@ -167,19 +179,28 @@ void interface::run()
     auto start = std::chrono::high_resolution_clock::now();
     long frames = 0;
     double fps = 0;
-    this->m->setPosPlayer(3250, 3400);
+    this->m->setPosPlayer(3250, 3100);
     SDL_Rect rect;
+    SDL_Rect backgroundRect = {0, 0, 1600, 900};
     SDL_Event event;
-    rectangle hitboxPlayer = rectangle(10, 40, 40, 49);
+    rectangle hitboxPlayer = rectangle(10, 10, 40, 40);
 
-    SDL_Texture* walk[4] = {};
+    SDL_Texture *walk[4] = {};
     walk[0] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_walking_1.png");
     walk[1] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_walking_2.png");
     walk[2] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_walking_3.png");
     walk[3] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_walking_4.png");
 
+    SDL_Texture *hurt[3] = {};
+    hurt[0] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_hurt_1.png");
+    hurt[1] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_hurt_2.png");
+    hurt[2] = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_hurt_3.png");
+
+    SDL_Texture *fall_jump = IMG_LoadTexture(renderer, "ressources/assets/player/Witchcraft_jump.png");
+
     int tick = 0;
-    int frameSprite = 0;
+    int frameSpriteWalk = 0;
+    int frameSpriteHurt = 0;
     while (windows_on)
     {
         if (checkColision(90, hitboxPlayer))
@@ -192,7 +213,7 @@ void interface::run()
             //     {
             //         escapeMenuOn = true;
             //     }
-            std::cout << event.key.keysym.sym << std::endl;
+            // std::cout << event.key.keysym.sym << std::endl;
 
             if (event.type == SDL_QUIT)
             {
@@ -216,6 +237,9 @@ void interface::run()
                     break;
                 case SDLK_LCTRL:
                     sprint = true;
+                    break;
+                case SDLK_SPACE:
+                    jump = true;
                     break;
                 default:
                     break;
@@ -241,20 +265,59 @@ void interface::run()
                 case SDLK_LCTRL:
                     sprint = false;
                     break;
+                case SDLK_SPACE:
+                    jump = false;
+                    break;
                 default:
                     break;
                 }
             }
         }
 
-        if(sprint) {
+        if (sprint)
+        {
             vitesse_max = vitesse_max_sprint;
-        } else {
+        }
+        else
+        {
             vitesse_max = vitesse_max_nosprint;
+        }
+
+        if (jump && isFloor(169, hitboxPlayer))
+        {
+            jump_started = true;
+        }
+
+        if (!jump)
+        {
+            jump_started = false;
+            time_jump = 0;
+            direction.y = 0;
+        }
+
+        if (jump_started)
+        {
+            time_jump++;
+        }
+
+        if (time_jump > time_max_jump)
+        {
+            jump_started = false;
+            time_jump = 0;
+            direction.y = 0;
         }
 
         direction.x = 0;
         direction.y = 0;
+
+        if (jump_started)
+        {
+            direction.y = -1;
+        }
+        else
+        {
+            direction.y = 0;
+        }
 
         if (droiteAppuye)
         {
@@ -266,63 +329,86 @@ void interface::run()
             direction.x = -1;
         }
 
-        if (hautAppuye)
+        if (direction.y != 0)
         {
-            direction.y = -1;
+            vitesse.y += direction.y * (acceleration + 1);
         }
-
-        if (basAppuye)
+        else if (!isFloor(169, hitboxPlayer))
         {
-            direction.y = 1;
+            printf("tu ajoute quoi dans se cas la gros fdp de tes grand mort la: %.2f\n", (gravity.y * acceleration));
+            vitesse.y = vitesse.y + (gravity.y * (acceleration - 0.5));
+            printf("ALORS PK TU AJOUTE PAS ENCULER %.2f\n", vitesse.y);
         }
 
         vitesse.x += direction.x * acceleration;
-        vitesse.y += direction.y * acceleration;
 
-        if (direction.x == 0 || direction.y == 0)
+        if (direction.x == 0)
         {
-            if (direction.x == 0)
+            if (vitesse.x > 0)
             {
-                if (vitesse.x > 1)
-                {
-                    vitesse.x = 0;
-                }
-                else if (vitesse.x < -1)
-                {
-                    vitesse.x = 0;
-                }
+                vitesse.x -= (acceleration + 1);
+            }
+            else
+            {
+                vitesse.x += (acceleration + 1);
             }
 
-            if (direction.y == 0)
+            if (vitesse.x <= 3)
             {
-                if (vitesse.y > 1)
-                {
-                    vitesse.y = 0;
-                }
-                else if (vitesse.y < -1)
-                {
-                    vitesse.y = 0;
-                }
+                vitesse.x = 2;
+            }
+            if (vitesse.x <= 2)
+            {
+                vitesse.x = 1;
+            }
+            if (vitesse.x <= 1)
+            {
+                vitesse.x = 0;
+            }
+
+            if (vitesse.x >= -3)
+            {
+                vitesse.x = -2;
+            }
+            if (vitesse.x >= -2)
+            {
+                vitesse.x = -1;
+            }
+            if (vitesse.x >= -1)
+            {
+                vitesse.x = 0;
             }
         }
+
+        std::cout << "direction y: " << direction.y << std::endl;
+        std::cout << "jumpstard: " << jump_started << std::endl;
+        std::cout << "vitesse en y: " << vitesse.y << std::endl;
+        std::cout << "vitesse en x: " << vitesse.x << std::endl;
 
         if (vitesse.x > vitesse_max)
         {
             vitesse.x = vitesse_max;
         }
+
         else if (vitesse.x < (-vitesse_max))
         {
             vitesse.x = (-vitesse_max);
         }
 
-        if (vitesse.y > vitesse_max)
+        if (vitesse.y > vitesse_fall_max)
         {
-            vitesse.y = vitesse_max;
+            vitesse.y = vitesse_fall_max;
         }
+        if (vitesse.y < (-vitesse_jump_max))
+        {
+            vitesse.y = (-vitesse_jump_max);
+        }
+        /*
         else if (vitesse.y < (-vitesse_max))
         {
             vitesse.y = (-vitesse_max);
         }
+        */
 
         moveX(vitesse.x);
         if (checkColision(174))
@@ -339,17 +425,27 @@ void interface::run()
         }
 
         moveY(vitesse.y);
-        if (checkColision(174))
-        {
-            moveY(-vitesse.y / 2);
-        }
+        // if (checkColision(174))
+        //{
+        //     moveY(-vitesse.y / 2);
+        // }
         if (checkColision(169, hitboxPlayer))
         {
             moveY(-vitesse.y);
+            vitesse.y = 0;
         }
         if (checkColision(10))
         {
             moveY(-vitesse.y);
+        }
+
+        if (isFloor(169, hitboxPlayer))
+        {
+            std::cout << "floor touched" << std::endl;
+        }
+        else
+        {
+            std::cout << "floor not" << std::endl;
         }
 
         // std::cout << "player posSS: " << m->getPosPlayerX() << " " << m->getPosPlayerY() << std::endl;
@@ -357,6 +453,7 @@ void interface::run()
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, this->textures["background"], NULL, &backgroundRect);
 
         int xmoin = m->getPosPlayerX() - 800;
         int parseXmoin = xmoin / 50;
@@ -382,49 +479,103 @@ void interface::run()
                 {
                     printf("here\n");
                 }
-                //std::cout << "x: " << i / 50 << " y: " << y / 50 << std::endl;
+                // std::cout << "x: " << i / 50 << " y: " << y / 50 << std::endl;
                 switch (this->m->getSurface(parseXmoin + c, parseYmoin + u))
                 {
-                case 255:
-                    SDL_RenderCopy(renderer, this->textures["floor1"], NULL, &rect);
+                    // case 255:
+                    //     SDL_RenderCopy(renderer, this->textures["floor1"], NULL, &rect);
+                    //     break;
+                    // case 91:
+                    //     SDL_RenderCopy(renderer, this->textures["image"], NULL, &rect);
+                    //     break;
+                    // case 169:
+                    //     SDL_RenderCopy(renderer, this->textures["floor3"], NULL, &rect);
+                    //     break;
+                    // case 174:
+                    //     SDL_RenderCopy(renderer, this->textures["water"], NULL, &rect);
+                    //     break;
+                    // case 124:
+                    //     SDL_RenderCopy(renderer, this->textures["lava"], NULL, &rect);
+                    //     break;
+                    // case 154:
+                    //     SDL_RenderCopy(renderer, this->textures["grass"], NULL, &rect);
+                    //     break;
+                    // case 10:
+                    //     SDL_RenderCopy(renderer, this->textures["water"], NULL, &rect);
+                    //     break;
+
+                case 39:
                     break;
-                case 91:
-                    SDL_RenderCopy(renderer, this->textures["image"], NULL, &rect);
+                case 176:
+                    SDL_RenderCopy(renderer, this->textures["light_brick"], NULL, &rect);
                     break;
                 case 169:
-                    SDL_RenderCopy(renderer, this->textures["floor3"], NULL, &rect);
-                    break;
-                case 174:
-                    SDL_RenderCopy(renderer, this->textures["water"], NULL, &rect);
+                    SDL_RenderCopy(renderer, this->textures["dark_brick"], NULL, &rect);
                     break;
                 case 124:
                     SDL_RenderCopy(renderer, this->textures["lava"], NULL, &rect);
                     break;
-                case 154:
-                    SDL_RenderCopy(renderer, this->textures["grass"], NULL, &rect);
+                case 96:
+                    SDL_RenderCopy(renderer, this->textures["open_door"], NULL, &rect);
                     break;
                 case 10:
-                    SDL_RenderCopy(renderer, this->textures["water"], NULL, &rect);
+                    SDL_RenderCopy(renderer, this->textures["abyss"], NULL, &rect);
                     break;
 
                 default:
                     SDL_RenderCopy(renderer, this->textures["error"], NULL, &rect);
                     break;
                 }
+                /**
+                 * 39 -> nothing
+                 * 176 -> lightbrick
+                 * 169 -> darkbrick
+                 * 124 -> lava
+                 * 96-> woden door
+                 * 10 -> abyss worldborder
+                 *
+                 */
                 // 255->floor1 90->image.png 169->floor3 174->water 124->lava 154->grass 10->world border
             }
         }
 
         SDL_Rect playerRect = {800, 450, 50, 50};
-        if(tick%15 == 0) {
-            frameSprite+=1;
-            frameSprite = frameSprite%4;
+        if (tick % 15 == 0)
+        {
+            frameSpriteWalk += 1;
+            frameSpriteWalk %= 4;
         }
 
-        if(vitesse.x == 0 && vitesse.y == 0) {
-            SDL_RenderCopy(renderer, this->textures["player"], NULL, &playerRect);
-        } else {
-            SDL_RenderCopy(renderer, walk[frameSprite], NULL, &playerRect);
+        if(tick%250==0) {
+            it = true;
+        }
+
+
+        if (it)
+        {
+            if(tick%15 == 0) {
+                frameSpriteHurt++;
+                if(frameSpriteHurt == 3) {
+                    it = false;
+                }
+                frameSpriteHurt %=3;
+            }
+            SDL_RenderCopy(renderer, hurt[frameSpriteHurt], NULL, &playerRect);
+        }
+        else
+        {
+            if (vitesse.x == 0 && vitesse.y == 0)
+            {
+                SDL_RenderCopy(renderer, this->textures["player"], NULL, &playerRect);
+            }
+            else if (vitesse.y != 0)
+            {
+                SDL_RenderCopy(renderer, fall_jump, NULL, &playerRect);
+            }
+            else
+            {
+                SDL_RenderCopy(renderer, walk[frameSpriteWalk], NULL, &playerRect);
+            }
         }
         SDL_RenderPresent(renderer);
 
@@ -441,17 +592,19 @@ void interface::run()
         if (duration >= 1000)
         {
             fps = frames / (duration / 1000.0);
-            system("clear");
-            printf("fps: %.2f, total frame: %d\n", fps, frames);
+            //    system("clear");
+            //    printf("fps: %.2f, total frame: %d\n", fps, tick);
 
             start = std::chrono::high_resolution_clock::now();
             frames = 0;
         }
+        std::cout << "jump isactiv: " << jump_started << std::endl;
+        std::cout << "jump tick: " << time_jump << std::endl;
         printf("fps: %.2f, total frame: %d\n", fps, frames);
+        // std::this_thread::sleep_for(std::chrono::milliseconds(7)); // 60 fps (1/60 * 1000 ≈ 16.67) 144 fps ( 1/144 * 1000 ≈ 6.944)
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(7)); // 60 fps (1/60 * 1000 ≈ 16.67) 144 fps ( 1/144 * 1000 ≈ 6.944)
+        system("clear");
         // std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // 60 fps (1/60 * 1000 ≈ 16.67) 144 fps ( 1/144 * 1000 ≈ 6.944)
-        //system("clear");
         //  windows_on = false;
         // std::cout << "player posSS: " << m->getPosPlayerX() << " " << m->getPosPlayerY() << std::endl;
         tick++;
@@ -461,7 +614,6 @@ void interface::run()
     {
         SDL_DestroyTexture(i);
     }
-
 
     clearTextures();
     SDL_DestroyRenderer(this->renderer);
@@ -593,4 +745,28 @@ void interface::escapeMenu()
     }
 }
 
-void clearTextures() {}
+bool interface::isFloor(int block, rectangle r)
+{
+    int x = m->getPosPlayerX();
+    int y = m->getPosPlayerY();
+
+    /*
+     * a b
+     * c d
+     */
+
+    bool a = m->getSurface((x + r.a) / 50, (y + r.b) / 50) == block;
+    bool b = m->getSurface((x + r.c) / 50, (y + r.b) / 50) == block;
+    bool c = m->getSurface((x + r.a) / 50, (y + r.d + 1) / 50) == block;
+    bool d = m->getSurface((x + r.c) / 50, (y + r.d + 1) / 50) == block;
+
+    if (c || d)
+    {
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}

@@ -26,7 +26,7 @@ int main(int argc, char const *argv[])
     // cout << 12*100+34 << endl;
 
     // cout << "1478: " << getY(1478) << endl;
-    map *m = new map(1, new player(10), image("ressources/assets/bordermap.png"));
+    map *m = new map(1, new player(10), image("ressources/assets/2d/map.png"));
     //camera *view = new camera(m);
     //view->update();
     //m->show(true);
